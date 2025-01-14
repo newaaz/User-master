@@ -4,41 +4,22 @@ class UsersController < ApplicationController
   end
 
   def new
-    @user = User.new
+    @user = Users::Create.new
     @skills = Skill.all
     @interests = Interest.all
   end
 
   def create
-    user_full_name = "#{user_params['surname']} #{user_params['name']} #{user_params['patronymic']}"
+    outcome = Users::Create.run(params[:user])
 
-    @user = User.new(user_params.merge(full_name: user_full_name))
-
-    if @user.save
+    if outcome.valid?
       redirect_to users_path
     else
-      @skill = Skill.all
-      @interests = Interest.all
+      @user = outcome
 
-      flash.now[:alert] = outcome.errors.full_messages.join(', ')
-      render :new
+      render turbo_stream: turbo_stream.update('forms_errors',
+                                               partial: 'shared/errors',
+                                               locals:   { object: @user })
     end
-  end
-
-  private
-
-  def user_params
-    params.require(:user).permit(
-      :name,
-      :surname,
-      :patronymic,
-      :email,
-      :age,
-      :nationality,
-      :country,
-      :gender,
-      interest_ids: [],
-      skill_ids: []
-    )
   end
 end
