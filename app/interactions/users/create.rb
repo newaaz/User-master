@@ -1,6 +1,6 @@
 module Users
   class Create < ActiveInteraction::Base
-    set_callback :filter, :before, -> { email.downcase! }
+    set_callback :filter, :before, -> { email.downcase! if email.present? }
 
     string :name, :surname, :patronymic, :email, :nationality, :country, :gender
     integer :age
