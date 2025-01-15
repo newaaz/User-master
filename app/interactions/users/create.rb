@@ -14,19 +14,17 @@ module Users
     validate  :email_uniqueness
 
     def execute
-      ActiveRecord::Base.transaction do
-        user = User.new(user_attributes)
+      user = User.new(user_attributes)
 
-        add_interests_to(user) if interests.length > 1
-        add_skills_to(user) if skills.length > 1
+      add_interests_to(user) if interests.length > 1
+      add_skills_to(user) if skills.length > 1
 
-        unless user.save
-          errors.merge!(user.errors)
-          raise ActiveRecord::Rollback
-        end
-
-        user
+      unless user.save
+        errors.merge!(user.errors)
+        raise ActiveRecord::Rollback
       end
+
+      user
     end
 
     def to_model
