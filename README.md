@@ -1,24 +1,68 @@
 # README
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+### 1. Использовать gem ActiveInteraction. Отрефакторить класс Users::Create
+При рефакторинге использовал Декларативный подход, что подразумевает:
+* Явное описание ожидаемых входных параметров
+* Вместо множества `return` используются валидации `ActiveModel`
+* Использование именнованных методов
 
-Things you may want to cover:
+### 2. Исправление опечатки Skill
+Если приложение только разрабатывается, то можно сделать проще:
+Исправить опечатку в миграции и выполнить rails `db:reset`. Или:
+1. Создаём отдельную миграцию для переименования таблицы.
+```ruby
+class RenameSkilsToSkills < ActiveRecord::Migration[7.0]
+  def change
+    rename_table :skils, :skills
+  end
+end
+```
+* Безопасное переименование с сохранением данных
+* Возможность отката
+* Назначение правильного нейминга в соответствии конвенции именований в Rails
+* Требуется выполнить миграцию на всех окружениях
+2. Использование `table_name` в модели
+```ruby
+class Skill < ApplicationRecord
+  self.table_name = "skils"
+  
+  has_many :user_skills
+  has_many :users, through: :user_skills
+end
+```
+* Не требует изменений в БД
+* Быстрое временное решение
+* Не исправляет прблему на уровне БД
+* Не соответствует конвенциям именования в Rails
 
-* Ruby version
+Таким образом предпочтительным является 1-й способ, в то время как второй может подойти тлько в качестве временного решения
 
-* System dependencies
+### 3. Исправить связи
+Представленное описание моделей подразумевает либо промежуточную таблицу между моделями `User` и `Skill`, `User` и `Interest`. Это реализуется с помощью связи `HABTM`
+Либо связь через промежуточные модели `UserSkill`, `UserInterest` с помощью связи `has_many through`
+```ruby
+class User < ApplicationRecord
+  has_many :user_interests, dependent: :destroy
+  has_many :interests, through: :user_interests
 
-* Configuration
+  has_many :user_skills, dependent: :destroy
+  has_many :skills, through: :user_skills
+end
+```
+Был выбран вариант с промежуточной моделью, тк в будущем возможно понадобилось бы более подробное описание навыков и интересов пользователя - например `уровень навыка`, который можно было бы добавить в модели `UserSkill`
 
-* Database creation
+### 4. Поднять Rails приложение
+Приложение поднял
 
-* Database initialization
+Для примера развернул на тестовом VPS
 
-* How to run the test suite
+http://212.22.70.223/
 
-* Services (job queues, cache servers, search engines, etc.)
+Приложение уже раньше было развёрнуто, добавил туда функционал для создания пользователей из данного тестового задания
 
-* Deployment instructions
 
-* ...
+### 5. Написать тесты
+Написаны тесты:
+* Для контроллера `users#create`
+* Приёмочные тесты для создания пользователя
+* Для класса `Users::Create`
