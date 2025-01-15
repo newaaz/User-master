@@ -52,7 +52,7 @@ RSpec.describe UsersController, type: :controller do
 
         user = User.find_by(email: user_params[:email])
 
-        expect(user.skills).to eq skills               # to match_array(skills)
+        expect(user.skills).to eq skills
         expect(user.interests).to eq interests
       end
     end
@@ -64,8 +64,7 @@ RSpec.describe UsersController, type: :controller do
 
       it 'renders error template' do
         post :create, params: { user: attributes_for(:user, name: nil) }
-
-        expect(response).to render_template "shared/_errors"
+        expect(response).to render_template :new
       end
 
       it 'getting an errors with missing required fields (name, patronymic, male, nationality, country, gender)' do
@@ -81,50 +80,42 @@ RSpec.describe UsersController, type: :controller do
 
       it 'getting an error - email can not blank' do
         post :create, params: { user: attributes_for(:user, email: nil) }
-
         expect(assigns(:user).errors[:email]).to include("can't be blank")
       end
 
       it 'getting an error - email is not valid' do
         post :create, params: { user: attributes_for(:user, email: 'invalid_email') }
-
         expect(assigns(:user).errors[:email]).to include("is invalid")
       end
 
       it 'getting an error - email is already taken' do
         user = create(:user)
         post :create, params: { user: attributes_for(:user, email: user.email) }
-
         expect(assigns(:user).errors[:email]).to include("has already been taken")
       end
 
       it 'getting an error - age is not a number' do
         post :create, params: { user: attributes_for(:user, age: 'invalid_age') }
-
         expect(assigns(:user).errors[:age]).to include("is not a valid integer")
       end
 
       it 'getting an error - age must be greater than 0' do
         post :create, params: { user: attributes_for(:user, age: -1) }
-
         expect(assigns(:user).errors[:age]).to include("must be greater than 0")
       end
 
       it 'getting an error - age must be less than 90' do
         post :create, params: { user: attributes_for(:user, age: 91) }
-
         expect(assigns(:user).errors[:age]).to include("must be less than or equal to 90")
       end
 
       it 'gender must be male or female' do
         post :create, params: { user: attributes_for(:user, gender: 'invalid_gender') }
-
         expect(assigns(:user).errors[:gender]).to include("is not included in the list")
       end
 
       it 'getting an error - skills, interests must be an array' do
         post :create, params: { user: attributes_for(:user, skills: 'skills', interests: 'interests') }
-
         expect(assigns(:user).errors[:skills]).to include("is not a valid array")
       end
     end
