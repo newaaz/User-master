@@ -14,33 +14,36 @@ module Users
     validate  :email_uniqueness
 
     def execute
-      user = User.new(user_attributes)
+      User.transaction do
+        user = User.create(user_attributes)
 
-      add_interests_to(user) if interests.length > 1
-      add_skills_to(user) if skills.length > 1
+        add_interests_to(user) if interests.length > 1
+        add_skills_to(user) if skills.length > 1
 
-      unless user.save
-        errors.merge!(user.errors)
-        raise ActiveRecord::Rollback
+        user
       end
-
-      user
-    end
-
-    def to_model
-      User.new
     end
 
     private
 
     def add_interests_to(user)
-      user_interests = Interest.where(name: interests)
-      user.interests = user_interests
+      interest_ids = Interest.where(name: interests).pluck(:id)
+
+      user_interest_data = interest_ids.map do |interest_id|
+        { user_id: user.id, interest_id: interest_id }
+      end
+
+      UserInterest.insert_all(user_interest_data)
     end
 
     def add_skills_to(user)
-      user_skills = Skill.where(name: skills)
-      user.skills = user_skills
+      skill_ids = Skill.where(name: skills).pluck(:id)
+
+      user_skill_data = skill_ids.map do |skill_id|
+        { user_id: user.id, skill_id: skill_id }
+      end
+
+      UserSkill.insert_all(user_skill_data)
     end
 
     def user_attributes

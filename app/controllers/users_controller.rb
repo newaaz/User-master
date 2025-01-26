@@ -4,7 +4,7 @@ class UsersController < ApplicationController
   end
 
   def new
-    @user = Users::Create.new
+    @user = User.new
     @skills = Skill.all
     @interests = Interest.all
   end
